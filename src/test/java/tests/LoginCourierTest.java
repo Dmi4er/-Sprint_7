@@ -20,6 +20,7 @@ public class LoginCourierTest {
     public void setUp() {
         courierClient = new CourierClient();
         courier = new Courier("test_" + System.currentTimeMillis(), "password", "name");
+        // Создаем курьера и авторизуемся для получения id
         courierClient.createCourierRequest(courier);
         Response loginResponse = courierClient.loginCourierRequest(courier);
         courierId = loginResponse.then().extract().path("id");
@@ -27,7 +28,9 @@ public class LoginCourierTest {
 
     @After
     public void teardown() {
-        courierClient.delete(courierId);
+        if (courierId != 0) {
+            courierClient.delete(courierId);
+        }
     }
 
     @Test
@@ -38,8 +41,8 @@ public class LoginCourierTest {
         response.then()
                 .statusCode(200)
                 .body("id", notNullValue())
-                .body("$", hasKey("id")) // Проверка наличие поля
-                .body("id", is(not(0))); //Проверка, что при авторизации возвращается не пустой id
+                .body("$", hasKey("id"))
+                .body("id", is(not(0)));
     }
 
     @Test
@@ -51,18 +54,33 @@ public class LoginCourierTest {
         response.then()
                 .statusCode(404)
                 .body("message", equalTo("Учетная запись не найдена"))
-                .body("$", hasKey("message")); // Проверка, что возвращается ошибка
+                .body("$", hasKey("message"));
     }
 
     @Test
-    @DisplayName("Авторизация без пароля")
-    @Description("Проверка, что система возвращает ошибку при отсутствии пароля")
-    public void testCourierLoginWithoutPassword() {
-        Courier courierWithoutPassword = new Courier(courier.getLogin(), "", courier.getFirstName());
-        Response response = courierClient.loginCourierRequest(courierWithoutPassword);
+    @DisplayName("Авторизация без логина")
+    @Description("Проверка, что система возвращает ошибку при отсутствии логина")
+    public void testCourierLoginWithoutLogin() {
+        Courier courierWithoutLogin = new Courier("", "password", courier.getFirstName());
+        Response response = courierClient.loginCourierRequest(courierWithoutLogin);
         response.then()
                 .statusCode(400)
                 .body("message", equalTo("Недостаточно данных для входа"))
-                .body("$", hasKey("message")); // Проверка, что возвращается ошибка
+                .body("$", hasKey("message"));
+    }
+
+    @Test
+    @DisplayName("Авторизация с неправильным логином")
+    @Description("Проверка, что система возвращает ошибку при неправильном логине")
+    public void testLoginWithWrongLogin() {
+        String wrongLogin = "wrong_login_" + System.currentTimeMillis();
+        Courier courierWithWrongLogin = new Courier(wrongLogin, "password", "name");
+
+        Response response = courierClient.loginCourierRequest(courierWithWrongLogin);
+
+        response.then()
+                .statusCode(404)
+                .body("message", equalTo("Учетная запись не найдена"))
+                .body("$", hasKey("message"));
     }
 }

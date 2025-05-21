@@ -5,8 +5,10 @@ import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import models.Order;
 
+import static org.hamcrest.Matchers.notNullValue;
+
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.notNullValue; // Импорт для notNullValue()
 
 public class OrderClient {
     private static final String BASE_URL = "https://qa-scooter.praktikum-services.ru/";
@@ -17,21 +19,9 @@ public class OrderClient {
         return given()
                 .baseUri(BASE_URL)
                 .header("Content-type", "application/json")
-                .body(gson.toJson(order)) // Сериализация в JSON
+                .body(gson.toJson(order))
                 .when()
                 .post("/api/v1/orders");
-    }
-    @Step("Проверка создания заказа: код ответа 201 и непустой track")
-    static void validateCreateOrderResponse(Response response) {
-        response.then()
-                .statusCode(201)
-                .body("track", notNullValue());
-    }
-    @Step("Проверка получения списка заказов: код ответа 200 и непустой список")
-    static void validateGetOrderList(Response response) {
-        response.then()
-                .statusCode(200)
-                .body("orders", not(empty()));
     }
 
 
@@ -43,4 +33,7 @@ public class OrderClient {
                 .get("/api/v1/orders");
     }
 
+    public Response getOrderListRequest() {
+        return getOrderList();
+    }
 }

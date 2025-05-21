@@ -10,33 +10,29 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class CourierClient {
     private static final String BASE_URL = "https://qa-scooter.praktikum-services.ru/";
-    private static final Gson gson = new Gson();
+    private static final String ENDPOINT_CREATE_COURIER = "/api/v1/courier";
+    private static final String ENDPOINT_LOGIN_COURIER = "/api/v1/courier/login";
+    private static final String ENDPOINT_DELETE_COURIER = "/api/v1/courier/";
+
 
     @Step("Создать курьера")
     public Response createCourierRequest(Courier courier) {
         return given()
                 .baseUri(BASE_URL)
                 .header("Content-type", "application/json")
-                .body(gson.toJson(courier)) // Сериализация в JSON
+                .body(courier)
                 .when()
-                .post("/api/v1/courier");
-    }
-    @Step("Проверка ответа ОШИБКА создания курьера")
-    static void validateResponseMistake(Response response, int expectedStatusCode, String expectedMessage) {
-        response.then()
-                .statusCode(expectedStatusCode)
-                .body("message", equalTo(expectedMessage));
+                .post(ENDPOINT_CREATE_COURIER);
     }
 
     @Step("Авторизовать курьера")
     public Response loginCourierRequest(Courier courier) {
-        // создание тела запроса для авторизации курьера
         return given()
                 .baseUri(BASE_URL)
                 .header("Content-type", "application/json")
-                .body(gson.toJson(courier)) // Сериализация в JSON
+                .body(courier)
                 .when()
-                .post("/api/v1/courier/login");
+                .post(ENDPOINT_LOGIN_COURIER);
     }
 
     @Step("Удалить курьера")
@@ -44,6 +40,6 @@ public class CourierClient {
         given()
                 .baseUri(BASE_URL)
                 .when()
-                .delete("/api/v1/courier/" + courierId);
+                .delete(ENDPOINT_DELETE_COURIER + courierId);
     }
 }

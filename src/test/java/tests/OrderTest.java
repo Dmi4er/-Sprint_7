@@ -36,7 +36,7 @@ public class OrderTest {
     @DisplayName("Создание заказа с разными комбинациями цветов")
     @Description("Проверка, что заказ можно создать с разными комбинациями цветов: BLACK, GREY, оба цвета, без цвета")
     public void testCreateOrderWithDifferentColors() {
-        Order order = new Order(colors);
+        Order order = new Order(colors); // создаем объект заказа
         Response response = new OrderClient().sendCreateOrderRequest(order);
         response.then()
                 .statusCode(201) //проверка ответа на 201

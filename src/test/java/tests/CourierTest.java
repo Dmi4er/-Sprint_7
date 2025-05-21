@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.*;
+import static org.apache.http.HttpStatus.*;
 
 public class CourierTest {
     private CourierClient courierClient;
@@ -17,13 +18,14 @@ public class CourierTest {
     private int courierId;
 
     @Before
-    public void setup() {
+    public void setUp() {
         courierClient = new CourierClient();
         courier = new Courier("test_" + System.currentTimeMillis(), "password", "name");
+        courierId = 0; // Инициализация переменной
     }
 
     @After
-    public void setUp() {
+    public void tearDown() {
         if (courierId != 0) {
             courierClient.delete(courierId);
         }
@@ -35,19 +37,19 @@ public class CourierTest {
     public void testCreateCourierSuccess() {
         Response response = courierClient.createCourierRequest(courier);
         response.then()
-                .statusCode(201)
+                .statusCode(SC_CREATED)
+
                 .body("ok", is(true))
                 .body("$", hasKey("ok")); // Есть ли "ok" в ответе
 
         Response loginResponse = courierClient.loginCourierRequest(courier);
         loginResponse.then()
-                .statusCode(200)
+                .statusCode(SC_OK)
                 .body("id", notNullValue())
                 .body("$", hasKey("id")); // Есть ли "id"
 
         courierId = loginResponse.then().extract().path("id");
     }
-
 
     @Test
     @DisplayName("Запрос с повторяющимся логином")
@@ -59,21 +61,33 @@ public class CourierTest {
 
         Response response = courierClient.createCourierRequest(courier);
         response.then()
-                .statusCode(409)
+                .statusCode(SC_CONFLICT)
                 .body("message", equalTo("Этот логин уже используется. Попробуйте другой."))
                 .body("$", hasKey("message")); // Проверка, что возвращается ошибка
     }
 
     @Test
-    @DisplayName("Запрос без логина или пароля")
+    @DisplayName("Создание курьера без логина")
     @Description("Проверка создания курьера без обязательных полей")
     public void testCreateCourierWithoutLogin() {
         Courier courierWithoutLogin = new Courier("", "password", "name");
         Response response = courierClient.createCourierRequest(courierWithoutLogin);
         response.then()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .body("message", equalTo("Недостаточно данных для создания учетной записи"))
-                .body("$", hasKey("message")); // Проверка, что возвращается ошибка
+                .body("$", hasKey("message"));
     }
 
+    //создание курьера без пароля
+    @Test
+    @DisplayName("Создание курьера без пароля")
+    @Description("Проверка, что создание курьера без пароля возвращает ошибку")
+    public void testCreateCourierWithoutPassword() {
+        Courier courierWithoutPassword = new Courier("test_" + System.currentTimeMillis(), "", "name");
+        Response response = courierClient.createCourierRequest(courierWithoutPassword);
+        response.then()
+                .statusCode(SC_BAD_REQUEST)
+                .body("message", equalTo("Недостаточно данных для создания учетной записи"))
+                .body("$", hasKey("message"));
+    }
 }
